@@ -6,7 +6,14 @@
 
 package logging
 
-import "log/syslog"
+import (
+	"log/syslog"
+	"strconv"
+)
+
+var syslogHost string
+var syslogPort int = 514
+var syslogPriority syslog.Priority = syslog.LOG_INFO | syslog.LOG_USER
 
 // SyslogBackend is a simple logger to syslog backend. It automatically maps
 // the internal log levels to appropriate syslog log levels.
@@ -19,16 +26,25 @@ type SyslogBackend struct {
 // launched command.
 func NewSyslogBackend(prefix string) (b *SyslogBackend, err error) {
 	var w *syslog.Writer
-	w, err = syslog.New(syslog.LOG_CRIT, prefix)
+
+	if len(syslogHost) > 0 {
+		w, err = syslog.Dial("tcp4", syslogHost+":"+strconv.Itoa(syslogPort), syslogPriority, prefix)
+	} else {
+		w, err = syslog.New(syslogPriority, prefix)
+	}
 	return &SyslogBackend{w}, err
 }
 
-// NewSyslogBackendPriority is the same as NewSyslogBackend, but with custom
-// syslog priority, like syslog.LOG_LOCAL3|syslog.LOG_DEBUG etc.
-func NewSyslogBackendPriority(prefix string, priority syslog.Priority) (b *SyslogBackend, err error) {
-	var w *syslog.Writer
-	w, err = syslog.New(priority, prefix)
-	return &SyslogBackend{w}, err
+func setSyslogPriority(priority syslog.Priority) {
+	syslogPriority = priority
+}
+
+func SetSyslogHost(host string) {
+	syslogHost = host
+}
+
+func SetSyslogPort(port int) {
+	syslogPort = port
 }
 
 // Log implements the Backend interface.
