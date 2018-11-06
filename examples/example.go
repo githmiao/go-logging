@@ -1,9 +1,8 @@
 package main
 
 import (
-	"os"
-
-	"github.com/op/go-logging"
+	logging ".."
+	// "github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("example")
@@ -12,7 +11,7 @@ var log = logging.MustGetLogger("example")
 // which is dependent on the log level. Many fields have a custom output
 // formatting too, eg. the time returns the hour down to the milli second.
 var format = logging.MustStringFormatter(
-	`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`,
+	`%{shortfunc}->%{level:.4s} %{message}`,
 )
 
 // Password is just an example type implementing the Redactor interface. Any
@@ -24,21 +23,27 @@ func (p Password) Redacted() interface{} {
 }
 
 func main() {
-	// For demo purposes, create two backend for os.Stderr.
-	backend1 := logging.NewLogBackend(os.Stderr, "", 0)
-	backend2 := logging.NewLogBackend(os.Stderr, "", 0)
+	// // For demo purposes, create two backend for os.Stderr.
+	// backend1 := logging.NewLogBackend(os.Stderr, "", 0)
+	// backend2 := logging.NewLogBackend(os.Stderr, "", 0)
 
-	// For messages written to backend2 we want to add some additional
-	// information to the output, including the used log level and the name of
-	// the function.
-	backend2Formatter := logging.NewBackendFormatter(backend2, format)
+	// // For messages written to backend2 we want to add some additional
+	// // information to the output, including the used log level and the name of
+	// // the function.
+	// backend2Formatter := logging.NewBackendFormatter(backend2, format)
 
-	// Only errors and more severe messages should be sent to backend1
-	backend1Leveled := logging.AddModuleLevel(backend1)
-	backend1Leveled.SetLevel(logging.ERROR, "")
+	// // Only errors and more severe messages should be sent to backend1
+	// backend1Leveled := logging.AddModuleLevel(backend1)
+	// backend1Leveled.SetLevel(logging.ERROR, "")
+
+	backend, err := logging.NewSyslogBackend("example")
+	if err != nil {
+		panic(err)
+	}
+	formatter := logging.NewBackendFormatter(backend, format)
 
 	// Set the backends to be used.
-	logging.SetBackend(backend1Leveled, backend2Formatter)
+	logging.SetBackend(formatter)
 
 	log.Debugf("debug %s", Password("secret"))
 	log.Info("info")
